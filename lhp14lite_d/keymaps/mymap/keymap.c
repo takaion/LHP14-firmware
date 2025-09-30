@@ -89,6 +89,13 @@ joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
     [1] = JOYSTICK_AXIS_IN(JS_PIN_Y, min_y, med_y, max_y),
 };
 
+void render_lock_state(void) {
+    led_t led_state = host_keyboard_led_state();
+    oled_set_cursor(13, 0);
+    oled_write_P(led_state.num_lock ? PSTR("NL ") : PSTR("   "), false);
+    oled_write_P(led_state.caps_lock ? PSTR("CL ") : PSTR("   "), false);
+    oled_write_P(led_state.scroll_lock ? PSTR("SL") : PSTR("  "), false);
+}
 
 
 void render_layer(void) {
@@ -262,6 +269,7 @@ void render_layer(void) {
 bool oled_task_user(void) {
     render_logo();
     render_layer();
+    render_lock_state();
     return false;
 };
 
@@ -887,6 +895,3 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
 
 };
-
-
-
