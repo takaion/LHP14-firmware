@@ -22,7 +22,8 @@
 // Layers
 // Max 32 layers available
 #define MAIN 0
-#define TEST 1
+#define NUMPADS 1
+#define TEST 2
 
 
 void render_logo(void) {
@@ -34,20 +35,26 @@ void render_logo(void) {
 
 enum custom_keycodes {
   RGBRST = SAFE_RANGE,
+  DOUBLE_ZERO,
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-  switch (keycode) {
-    case RGBRST:
-      #ifdef RGBLIGHT_ENABLE
-        if (record->event.pressed) {
-          eeconfig_update_rgblight_default();
-          rgblight_enable();
-        }
-      #endif
-      break;
-  }
-  return true;
+    switch (keycode) {
+        case RGBRST:
+            #ifdef RGBLIGHT_ENABLE
+            if (record->event.pressed) {
+                eeconfig_update_rgblight_default();
+                rgblight_enable();
+            }
+            #endif
+            break;
+        case DOUBLE_ZERO:
+            if (record->event.pressed) {
+                SEND_STRING("00");
+            }
+            break;
+    }
+    return true;
 };
 
 
@@ -74,6 +81,9 @@ void render_layer(void) {
         case MAIN:
             oled_write_P(PSTR("MAIN\n"), false);
             rgblight_sethsv(0, 255, 90);
+            break;
+        case NUMPADS:
+            oled_write_ln_P(PSTR("NUMPADS"), false);
             break;
 
         case TEST:
@@ -117,7 +127,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX, \
         XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX, \
         XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX, \
-        XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX, JS_0, TO(TEST) \
+        XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX, JS_0, TO(NUMPADS) \
+    ),
+
+    [NUMPADS] = LAYOUT( \
+        KC_NUM,  KC_P7, KC_P8,       KC_P9,   LSFT(KC_MINS), \
+        KC_PSLS, KC_P4, KC_P5,       KC_P6,   KC_PMNS, \
+        KC_PAST, KC_P1, KC_P2,       KC_P3,   KC_PPLS, \
+        KC_BSPC, KC_P0, DOUBLE_ZERO, KC_PDOT, KC_PENT, JS_0, TO(TEST)
     ),
 
     /* TEST
