@@ -10,13 +10,16 @@
 #define JS_PIN_X F5
 #define JS_PIN_Y F4
 // ADC Measured value
-#define min_x 172
-#define med_x 444
-#define max_x 784
+#define JS_X_MIN 172
+#define JS_X_MED 444
+#define JS_X_MAX 784
 
-#define min_y 244
-#define med_y 532
-#define max_y 822
+#define JS_Y_MIN 244
+#define JS_Y_MED 532
+#define JS_Y_MAX 822
+
+// Enable/disable stick (Buttons are always enabled)
+static bool is_js_enabled = true;
 
 
 // Layers
@@ -34,8 +37,9 @@ void render_logo(void) {
 };
 
 enum custom_keycodes {
-  RGBRST = SAFE_RANGE,
-  DOUBLE_ZERO,
+    RGBRST = SAFE_RANGE,
+    DOUBLE_ZERO,
+    JS_TOGGLE,
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -53,14 +57,26 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 SEND_STRING("00");
             }
             break;
+        case JS_TOGGLE:
+            if (record->event.pressed) {
+                is_js_enabled = !is_js_enabled;
+            }
+            break;
     }
     return true;
 };
 
+void matrix_scan_user(void) {
+    if (!is_js_enabled) {
+        joystick_set_axis(0, JS_X_MED); // X軸
+        joystick_set_axis(1, JS_Y_MED); // Y軸
+        joystick_flush();
+    }
+}
 
 joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
-    [0] = JOYSTICK_AXIS_IN(JS_PIN_X, max_x, med_x, min_x),
-    [1] = JOYSTICK_AXIS_IN(JS_PIN_Y, min_y, med_y, max_y),
+    [0] = JOYSTICK_AXIS_IN(JS_PIN_X, JS_X_MAX, JS_X_MED, JS_X_MIN),
+    [1] = JOYSTICK_AXIS_IN(JS_PIN_Y, JS_Y_MIN, JS_Y_MED, JS_Y_MAX),
 };
 
 void render_lock_state(void) {
@@ -69,6 +85,12 @@ void render_lock_state(void) {
     oled_write_P(led_state.num_lock ? PSTR("NL ") : PSTR("   "), false);
     oled_write_P(led_state.caps_lock ? PSTR("CL ") : PSTR("   "), false);
     oled_write_P(led_state.scroll_lock ? PSTR("SL") : PSTR("  "), false);
+}
+
+void render_js_state(void) {
+    oled_set_cursor(13, 1);
+    oled_write_P(PSTR("JS:"), false);
+    oled_write_P(is_js_enabled ? PSTR("E") : PSTR("D"), false);
 }
 
 void render_layer_name(const char* name) {
@@ -101,6 +123,7 @@ bool oled_task_user(void) {
     render_logo();
     render_layer();
     render_lock_state();
+    render_js_state();
     return false;
 };
 
@@ -125,10 +148,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * `------------------------------------------------'  
      */
     [MAIN] = LAYOUT( \
-        XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX, \
-        XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX, \
-        XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX, \
-        XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX,    XXXXXXX, JS_0, TO(NUMPADS) \
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, JS_TOGGLE, \
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, JS_0, TO(NUMPADS) \
     ),
 
     [NUMPADS] = LAYOUT( \
@@ -146,13 +169,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * |------+------+------+------+------|   
      * |      |      |      |      |      |   
      * |------+------+------+------+------+------+------.  
-     * |      |      |      |      |      |JsPush|DRK   |  
+     * |      |      |      |      |      |JsPush|MAIN3  |  
      * `------------------------------------------------'  
      */
     [TEST] = LAYOUT( \
-        UG_TOGG,   UG_HUEU,   UG_HUED,    UG_SATU,    UG_SATD, \
-        UG_NEXT,   RGBRST,    UG_VALU,    UG_VALD,    XXXXXXX, \
-        XXXXXXX,   XXXXXXX,   XXXXXXX,    XXXXXXX,    XXXXXXX, \
-        XXXXXXX,   XXXXXXX,   XXXXXXX,    XXXXXXX,    XXXXXXX, JS_0, TO(MAIN) \
+        UG_TOGG, UG_HUEU, UG_HUED, UG_SATU, UG_SATD, \
+        UG_NEXT, RGBRST,  UG_VALU, UG_VALD, XXXXXXX, \
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, JS_0, TO(MAIN) \
     ),
 };
