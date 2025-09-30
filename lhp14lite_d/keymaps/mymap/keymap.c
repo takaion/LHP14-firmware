@@ -55,8 +55,10 @@
 
 
 void render_logo(void) {
-    oled_set_cursor(0, 0);
-    oled_write_P(lhp_logo, false);
+    for (uint8_t i = 0; i < LOGO_LINES; i++) {
+        oled_set_cursor(0, i);
+        oled_write_P(lhp_logo[i], false);
+    }
 };
 
 enum custom_keycodes {
@@ -85,7 +87,7 @@ joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
 
 
 
-void render_layer(void) {	
+void render_layer(void) {
     oled_set_cursor(0, 3);
     // Host Keyboard Layer Status
     oled_write_P(PSTR("Layer: "), false);
@@ -272,7 +274,7 @@ void suspend_wakeup_init_kb(void) {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
-  /* DRK
+    /* DRK
    * ,----------------------------------.   
    * |      |      |      |      |      |   
    * |------+------+------+------+------|   
