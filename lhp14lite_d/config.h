@@ -10,7 +10,7 @@
 
 #define OLED_TIMEOUT 0
 
-#define OLED_FONT_H "keyboards/lhp14lite_d/glcdfont_lhp14lite.c"
+#define OLED_FONT_H "./lhp14lite_d/glcdfont_lhp14lite.c"
 
 #define LAYER_STATE_32BIT
 
