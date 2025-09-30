@@ -5,14 +5,18 @@
 #include "joystick.h"
 #include "analog.h"
 
+// Joystick configurations
+// Pins
+#define JS_PIN_X F5
+#define JS_PIN_Y F4
 // ADC Measured value
-#define min_x 139
-#define med_x 329
-#define max_x 521
+#define min_x 172
+#define med_x 444
+#define max_x 784
 
-#define min_y 139
-#define med_y 339
-#define max_y 543
+#define min_y 244
+#define med_y 532
+#define max_y 822
 
 
 // Layer(=job) MAX 32jobs available
@@ -81,8 +85,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 
 joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
-    [0] = JOYSTICK_AXIS_IN(F5, max_x, med_x, min_x),
-    [1] = JOYSTICK_AXIS_IN(F4, min_y, med_y, max_y),
+    [0] = JOYSTICK_AXIS_IN(JS_PIN_X, max_x, med_x, min_x),
+    [1] = JOYSTICK_AXIS_IN(JS_PIN_Y, min_y, med_y, max_y),
 };
 
 
