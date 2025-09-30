@@ -71,28 +71,29 @@ void render_lock_state(void) {
     oled_write_P(led_state.scroll_lock ? PSTR("SL") : PSTR("  "), false);
 }
 
+void render_layer_name(const char* name) {
+    oled_set_cursor(0, 2);
+    oled_write_P(PSTR("Layer: "), false);
+    oled_write_ln_P(name, false);
+}
 
 void render_layer(void) {
-    oled_set_cursor(0, 3);
-    // Host Keyboard Layer Status
-    oled_write_P(PSTR("Layer: "), false);
-
     switch (get_highest_layer(layer_state)) {
         case MAIN:
-            oled_write_P(PSTR("MAIN\n"), false);
+            render_layer_name(PSTR("MAIN"));
             rgblight_sethsv(0, 255, 90);
             break;
         case NUMPADS:
-            oled_write_ln_P(PSTR("NUMPADS"), false);
+            render_layer_name(PSTR("NUMPADS"));
             break;
 
         case TEST:
-            oled_write_P(PSTR("TEST\n"), false);
+            render_layer_name(PSTR("TEST"));
             break;
             
         default:
             // Or use the write_ln shortcut over adding '\n' to the end of your string
-            oled_write_ln_P(PSTR("Undefined"), false);
+            render_layer_name(PSTR("Undefined"));
     }
 };
 
