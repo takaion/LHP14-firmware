@@ -31,8 +31,8 @@ struct JOYSTICK_ANGLES { int16_t x; int16_t y; };
 // Max 32 layers available
 #define MAIN 0
 #define NUMPADS 1
-#define TEST 2
-
+#define FUNCTIONS 2
+#define TEST 3
 
 void render_logo(void) {
     for (uint8_t i = 0; i < LOGO_LINES; i++) {
@@ -194,6 +194,9 @@ void render_layer(void) {
         case NUMPADS:
             render_layer_name(PSTR("NUMPADS"));
             break;
+        case FUNCTIONS:
+            render_layer_name(PSTR("FUNCTIONS"));
+            break;
 
         case TEST:
             render_layer_name(PSTR("TEST"));
@@ -244,7 +247,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NUM,  KC_P7, KC_P8,       KC_P9,   LSFT(KC_MINS), \
         KC_PSLS, KC_P4, KC_P5,       KC_P6,   KC_PMNS, \
         KC_PAST, KC_P1, KC_P2,       KC_P3,   KC_PPLS, \
-        KC_BSPC, KC_P0, DOUBLE_ZERO, KC_PDOT, KC_PENT, JS_0, TO(TEST)
+        KC_BSPC, KC_P0, DOUBLE_ZERO, KC_PDOT, KC_PENT, JS_0, TO(FUNCTIONS)
+    ),
+
+    [FUNCTIONS] = LAYOUT( \
+        JS_TOGGLE, KC_F22, KC_F23, KC_F24, KC_MPLY, \
+        KC_MSTP,   KC_F19, KC_F20, KC_F21, KC_VOLD, \
+        KC_MUTE,   KC_F16, KC_F17, KC_F18, KC_VOLU, \
+        KC_MPRV,   KC_F13, KC_F14, KC_F15, KC_MNXT, JS_0, TO(TEST) \
     ),
 
     /* TEST
