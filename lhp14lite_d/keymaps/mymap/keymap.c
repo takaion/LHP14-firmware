@@ -8,6 +8,8 @@
 // Joystick configurations
 // Debug mode: show the joystick angles to OLED (comment out or undef this to disable)
 #define JS_DEBUG_ENABLED
+// Enable/disable stick (Buttons are always enabled)
+static bool is_js_enabled = true;
 // Deadzone: stick tilting values lower than this value are ignored
 #define JS_DEADZONE 64
 // Pins
@@ -22,10 +24,14 @@
 #define JS_Y_MED 532
 #define JS_Y_MAX 822
 
-// Enable/disable stick (Buttons are always enabled)
-static bool is_js_enabled = true;
-
 struct JOYSTICK_ANGLES { int16_t x; int16_t y; };
+
+// Button repeating
+#define JS_RAPID_BUTTON 1
+#define JS_RAPID_INTERVAL 60
+static bool is_js_rapid_enabled = false;
+static bool is_js_rapid_pressing = false;
+static uint16_t js_rapid_timer = 0;
 
 // Layers
 // Max 32 layers available
@@ -45,6 +51,7 @@ enum custom_keycodes {
     RGBRST = SAFE_RANGE,
     DOUBLE_ZERO,
     JS_TOGGLE,
+    JS_RAPID,
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -67,6 +74,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 is_js_enabled = !is_js_enabled;
             }
             break;
+        case JS_RAPID:
+            if (record->event.pressed) {
+                is_js_rapid_enabled = !is_js_rapid_enabled;
+                js_rapid_timer = timer_read();
+                if (!is_js_rapid_enabled) unregister_joystick_button(JS_RAPID_BUTTON);
+            }
     }
     return true;
 };
@@ -104,7 +117,6 @@ void read_joystick_angles(struct JOYSTICK_ANGLES *result) {
     result->x = joystick_angle(raw.x, JS_X_MAX, JS_X_MED, JS_X_MIN);
     result->y = joystick_angle(raw.y, JS_Y_MIN, JS_Y_MED, JS_Y_MAX);
 }
-
 
 void render_joystick_angle(int16_t val) {
     // フラッシュメモリ節約のためsprintfの代わりを自前で実装する
@@ -153,7 +165,25 @@ void report_joystick(void) {
     #endif
 }
 
+void run_js_rapid(void) {
+    if (is_js_rapid_enabled) {
+        // 前回の連打イベントから指定時間以上経過したかチェック
+        if (timer_elapsed(js_rapid_timer) >= JS_RAPID_INTERVAL) {
+            // ジョイスティックボタンの押下と即時解放をシミュレート
+            if (is_js_rapid_pressing) {
+                unregister_joystick_button(JS_RAPID_BUTTON);
+            } else {
+                register_joystick_button(JS_RAPID_BUTTON);
+            }
+            is_js_rapid_pressing = !is_js_rapid_pressing;
+            // タイマーをリセット
+            js_rapid_timer = timer_read();
+        }
+    }
+}
+
 void matrix_scan_user(void) {
+    run_js_rapid();
     report_joystick();
 }
 
@@ -174,6 +204,7 @@ void render_js_state(void) {
     oled_set_cursor(13, 1);
     oled_write_P(PSTR("JS:"), false);
     oled_write_P(is_js_enabled ? PSTR("E") : PSTR("D"), false);
+    oled_write_P(is_js_rapid_enabled ? PSTR("R") : PSTR("-"), false);
 }
 
 void render_layer_name(const char* name) {
@@ -238,7 +269,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      */
     [MAIN] = LAYOUT( \
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, JS_TOGGLE, \
-        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, JS_RAPID, \
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, JS_0, TO(NUMPADS) \
     ),
