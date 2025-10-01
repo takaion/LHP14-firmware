@@ -22,9 +22,9 @@ void render_lock_state(void) {
     oled_write_P(led_state.scroll_lock ? PSTR("SL") : PSTR("  "), false);
 }
 
-void render_js_state(struct JOYSTICK_STATE *js_state, struct JOYSTICK_RAPID_STATE *js_rapid_state) {
+void render_js_state(struct JOYSTICK_STATE *js_state, struct JOYSTICK_RAPID_STATE *js_rapid_state, bool js_is_mouse) {
     oled_write_P(PSTR("JS:"), false);
-    oled_write_P(js_state->enabled ? PSTR("E") : PSTR("D"), false);
+    oled_write_P(js_state->enabled ? (js_is_mouse ? PSTR("M") : PSTR("E")) : PSTR("D"), false);
     oled_write_P(js_rapid_state->enabled ? PSTR("R") : PSTR("-"), false);
 }
 

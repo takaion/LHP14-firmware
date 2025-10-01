@@ -11,6 +11,7 @@
 // Joystick configurations
 // Enable/disable stick (Buttons are always enabled)
 static struct JOYSTICK_STATE js_state = JS_INIT;
+static bool is_joystick_mouse = false;
 static struct JOYSTICK_RAPID_STATE js_rapid_state = JS_RAPID_INIT(JS_RAPID_BUTTON);
 
 // Layers
@@ -25,6 +26,7 @@ enum custom_keycodes {
     DOUBLE_ZERO,
     JS_TOGGLE,
     JS_RAPID,
+    JS_MO_TOGGLE,
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -51,13 +53,21 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (record->event.pressed) {
                 toggle_joystick_rapid(&js_rapid_state);
             }
+            break;
+        case JS_MO_TOGGLE:
+            if (record->event.pressed) {
+                is_joystick_mouse = !is_joystick_mouse;
+            }
+            break;
     }
     return true;
 };
 
 void matrix_scan_user(void) {
     run_joystick_rapid(&js_rapid_state);
-    report_joystick(&js_state, 0, 1);
+    read_joystick_angles(&js_state);
+    if (!is_joystick_mouse) report_joystick(&js_state, 0, 1);
+    else report_joystick_as_mouse(&js_state);
 }
 
 joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
@@ -96,7 +106,7 @@ bool oled_task_user(void) {
     oled_set_cursor(13, 0);
     render_lock_state();
     oled_set_cursor(13, 1);
-    render_js_state(&js_state, &js_rapid_state);
+    render_js_state(&js_state, &js_rapid_state, is_joystick_mouse);
     oled_set_cursor(0, 2);
     render_layer();
     #ifdef JS_DEBUG_ENABLED
@@ -127,10 +137,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * `------------------------------------------------'  
      */
     [MAIN] = LAYOUT( \
-        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, JS_TOGGLE, \
-        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, JS_RAPID, \
-        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, JS_0, TO(NUMPADS) \
+        JS_MO_TOGGLE, MS_BTN4, MS_BTN5, LSA(KC_F9), JS_TOGGLE, \
+        XXXXXXX,      MS_BTN2, MS_WHLU, MS_BTN1,    JS_RAPID, \
+        XXXXXXX,      MS_WHLL, MS_WHLD, MS_WHLR,    KC_F13, \
+        KC_MUTE,      XXXXXXX, MS_BTN3, XXXXXXX,    LALT(KC_MPLY), JS_0, TO(NUMPADS) \
     ),
 
     [NUMPADS] = LAYOUT( \

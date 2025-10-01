@@ -19,6 +19,8 @@
 #define JS_Y_MAX 822
 
 #define JS_RAPID_INTERVAL 60
+// 0 (Fastest) - 127 (Slowest)
+#define JS_MOUSE_SPEED 20
 
 struct JOYSTICK_ANGLES { int16_t x; int16_t y; };
 struct JOYSTICK_STATE {
@@ -38,6 +40,7 @@ bool is_in_deadzone(int16_t x, int16_t y, uint16_t dz);
 int16_t joystick_angle(int16_t raw, int16_t min, int16_t mid, int16_t max);
 void read_joystick_angles(struct JOYSTICK_STATE *state);
 void report_joystick(struct JOYSTICK_STATE *state, uint8_t x_axis, uint8_t y_axis);
+void report_joystick_as_mouse(struct JOYSTICK_STATE *js_state);
 
 #define JS_RAPID_INIT(B) {B, false, false, 0}
 void start_joystick_rapid(struct JOYSTICK_RAPID_STATE *state);

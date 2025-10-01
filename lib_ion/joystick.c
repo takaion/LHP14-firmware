@@ -40,12 +40,18 @@ void read_joystick_angles(struct JOYSTICK_STATE *state) {
 void report_joystick(struct JOYSTICK_STATE *state, uint8_t x_axis, uint8_t y_axis) {
     // The resolution of ADCs are 10bit: 0 - 1023
     // A virtual joystick has a range of -128 - 127 (int8_t)
-    read_joystick_angles(state);
     joystick_set_axis(x_axis, state->x); // X軸
     joystick_set_axis(y_axis, state->y); // Y軸
     joystick_flush();
 }
 
+void report_joystick_as_mouse(struct JOYSTICK_STATE *js_state) {
+    report_mouse_t mo = pointing_device_get_report();
+    mo.x = js_state->x / JS_MOUSE_SPEED;
+    mo.y = js_state->y / JS_MOUSE_SPEED;
+    pointing_device_set_report(mo);
+    pointing_device_send();
+}
 
 void start_joystick_rapid(struct JOYSTICK_RAPID_STATE *state) {
     state->enabled = true;
