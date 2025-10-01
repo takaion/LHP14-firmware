@@ -137,7 +137,9 @@ void render_layer(void) {
     switch (get_highest_layer(layer_state)) {
         case MAIN:
             render_layer_name(PSTR("MAIN"));
+            #ifdef RGBLIGHT_ENABLE
             rgblight_sethsv(0, 255, 90);
+            #endif
             break;
         case NUMPADS:
             render_layer_name(PSTR("NUMPADS"));

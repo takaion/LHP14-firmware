@@ -27,7 +27,7 @@
       "mousekey": true,
       "nkro": false,
       "backlight": false,
-      "rgblight": true,
+      "rgblight": false,
       "oled": true
   },
   "rgblight": {
