@@ -6,6 +6,8 @@
 #include "analog.h"
 
 // Joystick configurations
+// Debug mode: show the joystick angles to OLED (comment out or undef this to disable)
+#define JS_DEBUG_ENABLED
 // Deadzone: stick tilting values lower than this value are ignored
 #define JS_DEADZONE 64
 // Pins
@@ -23,6 +25,7 @@
 // Enable/disable stick (Buttons are always enabled)
 static bool is_js_enabled = true;
 
+struct JOYSTICK_ANGLES { int16_t x; int16_t y; };
 
 // Layers
 // Max 32 layers available
@@ -85,23 +88,69 @@ int16_t joystick_angle(int16_t raw, int16_t min, int16_t mid, int16_t max) {
     return val; // min と max の大小関係が逆なら正負反転して返す
 }
 
+void read_joystick_angles(struct JOYSTICK_ANGLES *result) {
+    if (!is_js_enabled) {
+        result->x = 0;
+        result->y = 0;
+        return;
+    }
+    struct JOYSTICK_ANGLES raw = { analogReadPin(JS_PIN_X), analogReadPin(JS_PIN_Y) };
+    bool is_dz = is_in_deadzone(raw.x - JS_X_MED, raw.y - JS_Y_MED, JS_DEADZONE);
+    if (is_dz) {
+        result->x = 0;
+        result->y = 0;
+        return;
+    }
+    result->x = joystick_angle(raw.x, JS_X_MAX, JS_X_MED, JS_X_MIN);
+    result->y = joystick_angle(raw.y, JS_Y_MIN, JS_Y_MED, JS_Y_MAX);
+}
+
+
+void render_joystick_angle(int16_t val) {
+    // フラッシュメモリ節約のためsprintfの代わりを自前で実装する
+    char c;
+    bool is_nonzero_printed = false, is_negative = val < 0;
+    if (is_negative) val *= -1;
+    c = (val / 100) + 0x30;
+    if (c != '0') {
+        oled_write_char(is_negative && !is_nonzero_printed ? '-' : ' ', false);
+        oled_write_char(c, false);
+        is_nonzero_printed = true;
+    } else {
+        oled_write_char(' ', false);
+    }
+    val = val % 100;
+    c = (val / 10) + 0x30;
+    if (c != '0') {
+        if (!is_nonzero_printed) oled_write_char(is_negative ? '-' : ' ', false);
+        oled_write_char(c, false);
+        is_nonzero_printed = true;
+    } else {
+        oled_write_char(is_nonzero_printed ? c : ' ', false);
+    }
+    if (!is_nonzero_printed) oled_write_char(is_negative ? '-' : ' ', false);
+    oled_write_char((val % 10) + 0x30, false);
+}
+
+void render_joystick_angles(struct JOYSTICK_ANGLES *angles) {
+    oled_set_cursor(0, 3);
+    oled_write_P(PSTR("X:"), false);
+    render_joystick_angle(angles->x);
+    oled_write_P(PSTR(" Y:"), false);
+    render_joystick_angle(angles->y);
+}
+
 void report_joystick(void) {
     // The resolution of ADCs are 10bit: 0 - 1023
     // A virtual joystick has a range of -128 - 127 (int8_t)
-    if (is_js_enabled) {
-        int16_t raw_x = analogReadPin(JS_PIN_X);
-        int16_t raw_y = analogReadPin(JS_PIN_Y);
-        bool is_dz = is_in_deadzone(raw_x - JS_X_MED, raw_y - JS_Y_MED, JS_DEADZONE);
-        int16_t js_x = is_dz ? 0 : joystick_angle(raw_x, JS_X_MAX, JS_X_MED, JS_X_MIN);
-        int16_t js_y = is_dz ? 0 : joystick_angle(raw_y, JS_Y_MIN, JS_Y_MED, JS_Y_MAX);
-
-        joystick_set_axis(0, js_x);
-        joystick_set_axis(1, js_y);
-    } else {
-        joystick_set_axis(0, 0); // X軸
-        joystick_set_axis(1, 0); // Y軸
-    }
+    struct JOYSTICK_ANGLES angles;
+    read_joystick_angles(&angles);
+    joystick_set_axis(0, angles.x); // X軸
+    joystick_set_axis(1, angles.y); // Y軸
     joystick_flush();
+    #ifdef JS_DEBUG_ENABLED
+    render_joystick_angles(&angles);
+    #endif
 }
 
 void matrix_scan_user(void) {
@@ -134,6 +183,7 @@ void render_layer_name(const char* name) {
 }
 
 void render_layer(void) {
+    // Maximum number of the length of the layer name is 14
     switch (get_highest_layer(layer_state)) {
         case MAIN:
             render_layer_name(PSTR("MAIN"));
