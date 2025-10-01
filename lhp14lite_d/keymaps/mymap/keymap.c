@@ -6,6 +6,8 @@
 #include "analog.h"
 
 // Joystick configurations
+// Deadzone: stick tilting values lower than this value are ignored
+#define JS_DEADZONE 64
 // Pins
 #define JS_PIN_X F5
 #define JS_PIN_Y F4
@@ -66,17 +68,49 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 };
 
-void matrix_scan_user(void) {
-    if (!is_js_enabled) {
-        joystick_set_axis(0, JS_X_MED); // X軸
-        joystick_set_axis(1, JS_Y_MED); // Y軸
-        joystick_flush();
+bool is_in_deadzone(int16_t x, int16_t y, uint16_t dz) {
+    // x, y はそれぞれ -512 - 511 程度なので2乗しても高々2^19程度に収まる
+    uint32_t squared_length = (uint32_t)x * x + (uint32_t)y * y;
+    uint32_t squared_deadzone= (uint32_t)dz * dz;
+    return squared_length < squared_deadzone;
+} 
+
+int16_t joystick_angle(int16_t raw, int16_t min, int16_t mid, int16_t max) {
+    int32_t val = (raw - mid) * JOYSTICK_MAX_VALUE / (mid - min);
+    // 負の値であるはずが正の値になっている場合はおかしいので高い方でやり直し
+    if (val > 0) val = (raw - mid) * JOYSTICK_MAX_VALUE / (max - mid);
+    // 最小値・最大値でクリップする
+    if (val < -JOYSTICK_MAX_VALUE) val = -JOYSTICK_MAX_VALUE;
+    if (val > JOYSTICK_MAX_VALUE) val = JOYSTICK_MAX_VALUE;
+    return val; // min と max の大小関係が逆なら正負反転して返す
+}
+
+void report_joystick(void) {
+    // The resolution of ADCs are 10bit: 0 - 1023
+    // A virtual joystick has a range of -128 - 127 (int8_t)
+    if (is_js_enabled) {
+        int16_t raw_x = analogReadPin(JS_PIN_X);
+        int16_t raw_y = analogReadPin(JS_PIN_Y);
+        bool is_dz = is_in_deadzone(raw_x - JS_X_MED, raw_y - JS_Y_MED, JS_DEADZONE);
+        int16_t js_x = is_dz ? 0 : joystick_angle(raw_x, JS_X_MAX, JS_X_MED, JS_X_MIN);
+        int16_t js_y = is_dz ? 0 : joystick_angle(raw_y, JS_Y_MIN, JS_Y_MED, JS_Y_MAX);
+
+        joystick_set_axis(0, js_x);
+        joystick_set_axis(1, js_y);
+    } else {
+        joystick_set_axis(0, 0); // X軸
+        joystick_set_axis(1, 0); // Y軸
     }
+    joystick_flush();
+}
+
+void matrix_scan_user(void) {
+    report_joystick();
 }
 
 joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
-    [0] = JOYSTICK_AXIS_IN(JS_PIN_X, JS_X_MAX, JS_X_MED, JS_X_MIN),
-    [1] = JOYSTICK_AXIS_IN(JS_PIN_Y, JS_Y_MIN, JS_Y_MED, JS_Y_MAX),
+    JOYSTICK_AXIS_VIRTUAL,
+    JOYSTICK_AXIS_VIRTUAL,
 };
 
 void render_lock_state(void) {
