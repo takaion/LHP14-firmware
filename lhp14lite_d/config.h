@@ -12,5 +12,5 @@
 
 #define OLED_FONT_H "./lhp14lite_d/glcdfont_lhp14lite.c"
 
-#define LAYER_STATE_32BIT
+#define LAYER_STATE_8BIT
 
