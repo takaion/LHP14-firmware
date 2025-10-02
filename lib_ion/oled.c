@@ -24,8 +24,8 @@ void render_lock_state(void) {
 
 void render_js_state(struct JOYSTICK_STATE *js_state, struct JOYSTICK_RAPID_STATE *js_rapid_state, bool js_is_mouse) {
     oled_write_P(PSTR("JS:"), false);
-    oled_write_P(js_state->enabled ? (js_is_mouse ? PSTR("M") : PSTR("E")) : PSTR("D"), false);
-    oled_write_P(js_rapid_state->enabled ? PSTR("R") : PSTR("-"), false);
+    oled_write_char(js_state->enabled ? (js_is_mouse ? 'M' : 'E') : 'D', false);
+    oled_write_char(js_rapid_state->enabled ? 'R' : '-', false);
 }
 
 void render_joystick_angle(int16_t val) {
@@ -35,13 +35,13 @@ void render_joystick_angle(int16_t val) {
     if (is_negative) val *= -1;
     c = (val / 100) + 0x30;
     if (c != '0') {
-        oled_write_char(is_negative && !is_nonzero_printed ? '-' : ' ', false);
+        oled_write_char(is_negative ? '-' : ' ', false);
         oled_write_char(c, false);
         is_nonzero_printed = true;
     } else {
         oled_write_char(' ', false);
     }
-    val = val % 100;
+    val %= 100;
     c = (val / 10) + 0x30;
     if (c != '0') {
         if (!is_nonzero_printed) oled_write_char(is_negative ? '-' : ' ', false);

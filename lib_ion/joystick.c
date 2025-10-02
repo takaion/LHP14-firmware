@@ -6,7 +6,7 @@
 bool is_in_deadzone(int16_t x, int16_t y, uint16_t dz) {
     // x, y はそれぞれ -512 - 511 程度なので2乗しても高々2^19程度に収まる
     uint32_t squared_length = (uint32_t)x * x + (uint32_t)y * y;
-    uint32_t squared_deadzone= (uint32_t)dz * dz;
+    uint32_t squared_deadzone = (uint32_t)dz * dz;
     return squared_length < squared_deadzone;
 } 
 
@@ -15,22 +15,18 @@ int16_t joystick_angle(int16_t raw, int16_t min, int16_t mid, int16_t max) {
     // 負の値であるはずが正の値になっている場合はおかしいので高い方でやり直し
     if (val > 0) val = (raw - mid) * JOYSTICK_MAX_VALUE / (max - mid);
     // 最小値・最大値でクリップする
-    if (val < -JOYSTICK_MAX_VALUE) val = -JOYSTICK_MAX_VALUE;
-    if (val > JOYSTICK_MAX_VALUE) val = JOYSTICK_MAX_VALUE;
-    return val; // min と max の大小関係が逆なら正負反転して返す
+    return val < -JOYSTICK_MAX_VALUE ? -JOYSTICK_MAX_VALUE : val > JOYSTICK_MAX_VALUE ? JOYSTICK_MAX_VALUE : val;
 }
 
 void read_joystick_angles(struct JOYSTICK_STATE *state) {
     if (!state->enabled) {
-        state->x = 0;
-        state->y = 0;
+        state->x = state->y = 0;
         return;
     }
     struct JOYSTICK_ANGLES raw = { analogReadPin(JS_PIN_X), analogReadPin(JS_PIN_Y) };
     bool is_dz = is_in_deadzone(raw.x - JS_X_MED, raw.y - JS_Y_MED, JS_DEADZONE);
     if (is_dz) {
-        state->x = 0;
-        state->y = 0;
+        state->x = state->y = 0;
         return;
     }
     state->x = joystick_angle(raw.x, JS_X_MAX, JS_X_MED, JS_X_MIN);
