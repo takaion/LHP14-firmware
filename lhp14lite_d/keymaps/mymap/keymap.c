@@ -19,7 +19,8 @@ static struct JOYSTICK_RAPID_STATE js_rapid_state = JS_RAPID_INIT(JS_RAPID_BUTTO
 #define MAIN 0
 #define NUMPADS 1
 #define FUNCTIONS 2
-#define TEST 3
+#define FFXIV 3
+#define TEST 4
 
 enum custom_keycodes {
     RGBRST = SAFE_RANGE,
@@ -90,6 +91,9 @@ void render_layer(void) {
         case FUNCTIONS:
             render_layer_name(PSTR("FUNCTIONS"));
             break;
+        case FFXIV:
+            render_layer_name(PSTR("FFXIV"));
+            break;
 
         case TEST:
             render_layer_name(PSTR("TEST"));
@@ -140,7 +144,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         JS_MO_TOGGLE, MS_BTN4, MS_BTN5, LSA(KC_F9), JS_TOGGLE, \
         XXXXXXX,      MS_BTN2, MS_WHLU, MS_BTN1,    JS_RAPID, \
         XXXXXXX,      MS_WHLL, MS_WHLD, MS_WHLR,    KC_F13, \
-        KC_MUTE,      XXXXXXX, MS_BTN3, XXXXXXX,    LALT(KC_MPLY), JS_0, TO(NUMPADS) \
+        KC_MUTE,      XXXXXXX, MS_BTN3, KC_DOT,     LALT(KC_MPLY), JS_0, TO(NUMPADS) \
     ),
 
     [NUMPADS] = LAYOUT( \
@@ -154,7 +158,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         JS_TOGGLE, KC_F22, KC_F23, KC_F24, KC_MPLY, \
         KC_MSTP,   KC_F19, KC_F20, KC_F21, KC_VOLD, \
         KC_MUTE,   KC_F16, KC_F17, KC_F18, KC_VOLU, \
-        KC_MPRV,   KC_F13, KC_F14, KC_F15, KC_MNXT, JS_0, TO(TEST) \
+        KC_MPRV,   KC_F13, KC_F14, KC_F15, KC_MNXT, JS_0, TO(FFXIV) \
+    ),
+
+    [FFXIV] = LAYOUT( \
+        KC_1,    KC_2, KC_3, KC_4,    KC_5, \
+        KC_TAB,  KC_Q, KC_W, KC_E,    KC_R, \
+        KC_LSFT, KC_A, KC_S, KC_D,    KC_F, \
+        KC_LCTL, KC_Z, KC_X, KC_LALT, KC_SPC, JS_MO_TOGGLE, TO(TEST) \
     ),
 
     /* TEST
