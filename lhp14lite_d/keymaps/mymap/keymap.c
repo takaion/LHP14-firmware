@@ -14,6 +14,8 @@ static struct JOYSTICK_STATE js_state = JS_INIT;
 static bool is_joystick_mouse = false;
 static struct JOYSTICK_RAPID_STATE js_rapid_state = JS_RAPID_INIT(JS_RAPID_BUTTON);
 
+static bool is_oled_enabled = true;
+
 // Layers
 // Max 32 layers available
 #define MAIN 0
@@ -28,6 +30,7 @@ enum custom_keycodes {
     JS_TOGGLE,
     JS_RAPID,
     JS_MO_TOGGLE,
+    OLED_TOGGLE,
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -60,6 +63,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 is_joystick_mouse = !is_joystick_mouse;
             }
             break;
+        case OLED_TOGGLE:
+            if (record->event.pressed) {
+                is_oled_enabled = !is_oled_enabled;
+                if (is_oled_enabled) oled_on();
+                else oled_off();
+            }
     }
     return true;
 };
@@ -106,6 +115,7 @@ void render_layer(void) {
 };
 
 bool oled_task_user(void) {
+    if (!is_oled_enabled) return false;
     render_logo();
     oled_set_cursor(13, 0);
     render_lock_state();
@@ -125,7 +135,7 @@ void suspend_power_down_kb(void) {
 };
 
 void suspend_wakeup_init_kb(void) {
-    oled_on();
+    if (is_oled_enabled) oled_on();
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -141,31 +151,31 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * `------------------------------------------------'  
      */
     [MAIN] = LAYOUT( \
-        JS_MO_TOGGLE, MS_BTN4, MS_BTN5, LSA(KC_F9), JS_TOGGLE, \
-        XXXXXXX,      MS_BTN2, MS_WHLU, MS_BTN1,    JS_RAPID, \
-        XXXXXXX,      MS_WHLL, MS_WHLD, MS_WHLR,    KC_F13, \
-        KC_MUTE,      XXXXXXX, MS_BTN3, KC_DOT,     LALT(KC_MPLY), JS_0, TO(NUMPADS) \
+        JS_MO_TOGGLE, OLED_TOGGLE, MS_WHLU, LSA(KC_F9), JS_TOGGLE, \
+        MS_BTN5,      MS_BTN2,     MS_BTN3, MS_BTN1,    JS_RAPID, \
+        MS_BTN4,      MS_WHLL,     MS_WHLD, MS_WHLR,    KC_F13, \
+        KC_MUTE,      KC_MPRV,     KC_MNXT, KC_DOT,     LALT(KC_MPLY), OLED_TOGGLE, TO(NUMPADS) \
     ),
 
     [NUMPADS] = LAYOUT( \
         KC_NUM,  KC_P7, KC_P8,       KC_P9,   LSFT(KC_MINS), \
         KC_PSLS, KC_P4, KC_P5,       KC_P6,   KC_PMNS, \
         KC_PAST, KC_P1, KC_P2,       KC_P3,   KC_PPLS, \
-        KC_BSPC, KC_P0, DOUBLE_ZERO, KC_PDOT, KC_PENT, JS_0, TO(FUNCTIONS)
+        KC_BSPC, KC_P0, DOUBLE_ZERO, KC_PDOT, KC_PENT, OLED_TOGGLE, TO(FUNCTIONS)
     ),
 
     [FUNCTIONS] = LAYOUT( \
         JS_TOGGLE, KC_F22, KC_F23, KC_F24, KC_MPLY, \
         KC_MSTP,   KC_F19, KC_F20, KC_F21, KC_VOLD, \
         KC_MUTE,   KC_F16, KC_F17, KC_F18, KC_VOLU, \
-        KC_MPRV,   KC_F13, KC_F14, KC_F15, KC_MNXT, JS_0, TO(FFXIV) \
+        KC_MPRV,   KC_F13, KC_F14, KC_F15, KC_MNXT, OLED_TOGGLE, TO(FFXIV) \
     ),
 
     [FFXIV] = LAYOUT( \
         KC_1,    KC_2, KC_3, KC_4,    KC_5, \
         KC_TAB,  KC_Q, KC_W, KC_E,    KC_R, \
         KC_LSFT, KC_A, KC_S, KC_D,    KC_F, \
-        KC_LCTL, KC_Z, KC_X, KC_LALT, KC_SPC, JS_MO_TOGGLE, TO(TEST) \
+        KC_LCTL, KC_Z, KC_X, KC_LALT, KC_SPC, OLED_TOGGLE, TO(TEST) \
     ),
 
     /* TEST
